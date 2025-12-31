@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AstraUltra | Exile AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --secondary: #1a1a2e;
+            --accent: #9b59b6;
+            --text: #ffffff;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1a1a2e 0%, #020205 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(142, 68, 173, 0.4);
+            box-shadow: 0 0 40px rgba(142, 68, 173, 0.25);
+            max-width: 450px;
+            width: 85%;
+        }
+
+        .icon-box {
+            font-size: 4.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 0 15px var(--primary));
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin: 0.5rem 0;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: #a0a0a0;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 18px 35px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+
+        .download-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .version-info {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #555;
+            letter-spacing: 1px;
+        }
+
+        .exile-text {
+            color: var(--primary);
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="icon-box">
+            <i class="fas fa-bolt"></i>
+        </div>
+        <h1>ASTRA ULTRA</h1>
+        <p>Exile tarafından geliştirilen en hızlı ve akıllı mobil asistan.</p>
+
+        <a href="AstraUltra.apk" class="download-btn">
+            <i class="fab fa-android"></i>
+            Hemen İndir (.apk)
+        </a>
+
+        <div class="version-info">
+            POWERED BY <span class="exile-text">EXILE</span>
+        </div>
+    </div>
+
+</body>
+</html>
