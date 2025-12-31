@@ -16,7 +16,7 @@
         body {
             background: radial-gradient(circle at center, #1a1a2e 0%, #020205 100%);
             color: var(--text);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -33,86 +33,53 @@
             backdrop-filter: blur(15px);
             border: 1px solid rgba(142, 68, 173, 0.4);
             box-shadow: 0 0 40px rgba(142, 68, 173, 0.25);
-            max-width: 450px;
+            max-width: 400px;
             width: 85%;
         }
 
-        .icon-box {
-            font-size: 4.5rem;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            filter: drop-shadow(0 0 15px var(--primary));
-        }
-
         h1 {
-            font-size: 2.8rem;
+            font-size: 2.5rem;
             margin: 0.5rem 0;
-            letter-spacing: 2px;
             background: linear-gradient(to right, #fff, var(--primary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        p {
-            color: #a0a0a0;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 2.5rem;
         }
 
         .download-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            gap: 12px;
+            background: var(--primary);
             color: white;
-            padding: 18px 35px;
-            border-radius: 15px;
+            padding: 18px 30px;
+            border-radius: 12px;
             text-decoration: none;
-            font-weight: 700;
+            font-weight: bold;
             font-size: 1.2rem;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            margin-top: 20px;
+            transition: 0.3s;
         }
 
         .download-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 0 30px var(--primary);
+            box-shadow: 0 0 20px var(--primary);
         }
 
-        .version-info {
-            margin-top: 2rem;
-            font-size: 0.9rem;
-            color: #555;
-            letter-spacing: 1px;
-        }
-
-        .exile-text {
-            color: var(--primary);
-            font-weight: 900;
-            text-transform: uppercase;
-        }
+        .footer { margin-top: 2rem; color: #777; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <div class="icon-box">
-            <i class="fas fa-bolt"></i>
-        </div>
+        <i class="fas fa-robot" style="font-size: 4rem; color: #8e44ad;"></i>
         <h1>ASTRA ULTRA</h1>
-        <p>Exile tarafından geliştirilen en hızlı ve akıllı mobil asistan.</p>
+        <p>Geleceğin mobil asistanı kapında.</p>
 
-        <a href="AstraUltra.apk" class="download-btn">
-            <i class="fab fa-android"></i>
-            Hemen İndir (.apk)
+        <a href="https://www.mediafire.com/file/sx21j8i89lgqnso/AstraUltra.apk/file" class="download-btn" target="_blank">
+            <i class="fab fa-android"></i> APK İndir
         </a>
 
-        <div class="version-info">
-            POWERED BY <span class="exile-text">EXILE</span>
-        </div>
+        <div class="footer">Created by <b>Exile</b></div>
     </div>
-
 </body>
 </html>
