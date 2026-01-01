@@ -2,13 +2,14 @@ import streamlit as st
 import google.generativeai as genai
 
 # --- 1. ÇEKİRDEK BAĞLANTISI ---
-# Streamlit Secrets panelindeki "NOVAKEY" ismini kullanır.
 try:
     if "NOVAKEY" in st.secrets:
         ASTRA_CORE_KEY = st.secrets["NOVAKEY"]
         genai.configure(api_key=ASTRA_CORE_KEY)
-        # 404 hatasını önlemek için en güncel flash modelini seçiyoruz
-        astra_engine = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # 404 HATASINI ÇÖZEN KRİTİK DEĞİŞİKLİK:
+        # 'gemini-1.5-flash' yerine en stabil olan 'gemini-pro' modelini kullanıyoruz.
+        astra_engine = genai.GenerativeModel('gemini-pro')
     else:
         st.error("⚠️ SİSTEM HATASI: Streamlit Secrets panelinde 'NOVAKEY' bulunamadı.")
         st.stop()
@@ -30,7 +31,6 @@ st.markdown("""
         background: linear-gradient(45deg, #00f2fe, #7028e4);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0px;
     }
     .exile-credit {
         text-align: center;
@@ -61,30 +61,28 @@ if not st.session_state.nova_authenticated:
 
 # --- 4. SOHBET ARA YÜZÜ ---
 st.markdown("<div class='astra-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#00f2fe;'>Sinyal Gücü: Maksimum | Operatör: Exile</p>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mesaj geçmişini ekrana bas
+# Mesaj geçmişi
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Kullanıcı girişi
-if prompt := st.chat_input("Bir komut ver, Exile..."):
+if prompt := st.chat_input("Emret Exile..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Astra'ya karakterini hatırlatıyoruz
-            full_prompt = f"Sen Astra 3.0 Nova'sın. Seni Bedirhan (Exile) yarattı. Cevapların kısa, öz ve zekice olsun. Kullanıcı: {prompt}"
+            # Astra Kimlik Komutu
+            full_prompt = f"Sen Astra 3.0 Nova'sın. Seni Bedirhan (Exile) yarattı. Zeki ve özlü cevaplar ver. Soru: {prompt}"
             response = astra_engine.generate_content(full_prompt)
             
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"⚠️ SİNYAL KESİLDİ: {str(e)}")
-            st.info("İpucu: Google Cloud'da API'nin 'Enabled' olduğunu ve anahtarın doğru projeye bağlı olduğunu kontrol et.")
