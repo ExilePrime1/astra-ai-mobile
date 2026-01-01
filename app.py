@@ -52,7 +52,7 @@ st.divider()
 
 if "messages" not in st.session_state:
     # Başlangıç mesajı
-    st.session_state.messages = [{"role": "assistant", "content": "Merhaba Bedirhan! Ben Astra. Senin için ne yapabilirim?"}]
+    st.session_state.messages = [{"role": "assistant", "content": "Merhaba kullanıcı! Ben Astra. Senin için ne yapabilirim?"}]
 
 # Mesajları şık bir şekilde göster
 for message in st.session_state.messages:
@@ -60,7 +60,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Kullanıcı Girişi
-if prompt := st.chat_input("Bir şeyler sor..."):
+if prompt := st.chat_input("AstraUltra 2.0 pro'ya birşeyler sor..."):
     # Kullanıcı mesajını ekle
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -87,7 +87,7 @@ if prompt := st.chat_input("Bir şeyler sor..."):
 with st.sidebar:
     st.title("⚙️ Astra Ayarları")
     st.write("Sistem Durumu: 🟢 Aktif")
-    st.write("Yapay Zeka: Gemini 1.5 Flash")
+    st.write("Yapay Zeka:AstraUltra 2.0 Pro")
     if st.button("Sohbeti Temizle"):
         st.session_state.messages = []
         st.rerun()
