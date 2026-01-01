@@ -3,7 +3,7 @@ import google.generativeai as genai
 
 # --- 1. ASTRA ÇEKİRDEK (YENİ API KEY) ---
 # Paylaştığın anahtar buraya işlendi:
-ASTRA_CORE_KEY = "AIzaSyBBxkq1hfjelkHwE8oaNIiOVMzWOAI7u-I" 
+ASTRA_CORE_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI" 
 
 genai.configure(api_key=ASTRA_CORE_KEY)
 astra_engine = genai.GenerativeModel('gemini-1.5-flash')
