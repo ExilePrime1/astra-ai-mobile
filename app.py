@@ -4,19 +4,19 @@ import google.generativeai as genai
 # --- 1. ÇEKİRDEK BAĞLANTISI ---
 try:
     if "NOVAKEY" in st.secrets:
-        # Streamlit Secrets'taki yeni AstraNova anahtarını bağla
+        # Streamlit Secrets'taki taze AstraNova anahtarını bağla
         genai.configure(api_key=st.secrets["NOVAKEY"])
         
-        # 404 HATASINI BİTİREN KRİTİK SATIR: 'models/' ön eki şarttır
+        # 404 HATASINI BİTİREN TAM YOL TANIMI
         astra_engine = genai.GenerativeModel('models/gemini-1.5-flash')
     else:
-        st.error("⚠️ SİSTEM DURDURULDU: Streamlit Secrets panelinde 'NOVAKEY' eksik!")
+        st.error("⚠️ SİSTEM DURDURULDU: NOVAKEY bulunamadı!")
         st.stop()
 except Exception as e:
-    st.error(f"⚠️ BAĞLANTI HATASI: {str(e)}")
+    st.error(f"⚠️ KRİTİK BAĞLANTI HATASI: {str(e)}")
     st.stop()
 
-# --- 2. GÖRSEL TASARIM (CSS) ---
+# --- 2. GÖRSEL TASARIM ---
 st.set_page_config(page_title="Astra 3.0 Nova", page_icon="☄️", layout="centered")
 
 st.markdown("""
@@ -24,54 +24,39 @@ st.markdown("""
     .stApp { background-color: #050508; color: #ffffff; }
     .astra-title {
         font-family: 'Courier New', monospace;
-        font-size: 55px;
+        font-size: 50px;
         font-weight: bold;
         text-align: center;
         background: linear-gradient(45deg, #00f2fe, #7028e4);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: -10px;
-    }
-    .exile-credit {
-        text-align: center;
-        font-size: 14px;
-        color: #444;
-        letter-spacing: 5px;
-        margin-bottom: 30px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ERİŞİM KONTROLÜ ---
-if "nova_auth" not in st.session_state:
-    st.session_state.nova_auth = False
+# --- 3. ERİŞİM SİSTEMİ ---
+if "nova_authenticated" not in st.session_state:
+    st.session_state.nova_authenticated = False
 
-if not st.session_state.nova_auth:
+if not st.session_state.nova_authenticated:
     st.markdown("<div class='astra-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
-    st.markdown("<div class='exile-credit'>CREATED BY EXILE</div>", unsafe_allow_html=True)
-    
-    password = st.text_input("Giriş Anahtarı:", type="password", placeholder="Şifreyi giriniz...")
+    password = st.text_input("Giriş Anahtarı:", type="password")
     if st.button("SİSTEMİ UYANDIR"):
         if password == "1234":
-            st.session_state.nova_auth = True
+            st.session_state.nova_authenticated = True
             st.rerun()
-        else:
-            st.error("Erişim Reddedildi.")
     st.stop()
 
-# --- 4. SOHBET ARAYÜZÜ ---
+# --- 4. SOHBET ARA YÜZÜ ---
 st.markdown("<div class='astra-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#00f2fe; font-size:12px;'>Sinyal Gücü: Maksimum | Operatör: Exile</p>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mesaj geçmişini göster
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Kullanıcı girişi
 if prompt := st.chat_input("Emret Exile..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -87,4 +72,4 @@ if prompt := st.chat_input("Emret Exile..."):
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"⚠️ SİNYAL KESİLDİ: {str(e)}")
-            st.info("Eğer hata 404 ise: Google Cloud'da 'Generative Language API'yi DISABLE yapıp tekrar ENABLE etmelisin.")
+            st.info("Eğer hala 404 ise: Google Cloud'da 'Generative Language API'yi DISABLE yapıp 1 dakika sonra ENABLE etmelisin.")
