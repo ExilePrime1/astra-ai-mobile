@@ -5,12 +5,19 @@ import google.generativeai as genai
 GOOGLE_API_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Hata ihtimaline karşı en temel model ismini deniyoruz
-# Eğer flash-latest çalışmıyorsa 'gemini-1.0-pro' en sağlamıdır.
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except:
-    model = genai.GenerativeModel('gemini-pro')
+# Mevcut modelleri kontrol et ve en iyisini seç
+def get_model():
+    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    # Tercih sıramız
+    if 'models/gemini-1.5-flash' in available_models:
+        return genai.GenerativeModel('gemini-1.5-flash')
+    elif 'models/gemini-pro' in available_models:
+        return genai.GenerativeModel('gemini-pro')
+    else:
+        # Eğer hiçbiri yoksa listedeki ilk uygun olanı seç
+        return genai.GenerativeModel(available_models[0].replace('models/', ''))
+
+model = get_model()
 
 st.set_page_config(page_title="Astra Ultra AI", page_icon="🚀")
 
@@ -47,14 +54,10 @@ if prompt := st.chat_input("Bir şeyler yaz..."):
 
     with st.chat_message("assistant"):
         try:
-            # En basit haliyle yanıt almayı deniyoruz
-            response = model.generate_content(prompt)
-            if response.text:
-                st.markdown(response.text)
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            # Astra kimliğini koruyarak yanıt al
+            full_prompt = f"Senin adın Astra. Seni Exile (Bedirhan) yarattı. Soru: {prompt}"
+            response = model.generate_content(full_prompt)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            # Eğer yine 404 verirse, koda model listesini yazdırıp hatayı göreceğiz
-            st.error(f"Sistem hatası: {str(e)}")
-            st.info("Alternatif model deneniyor, lütfen tekrar mesaj gönderin.")
-            # Hata durumunda modeli 'gemini-pro'ya zorla
-            st.session_state.model_fail = True
+            st.error(f"Hata: {str(e)}")
