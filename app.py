@@ -1,10 +1,12 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. YAPILANDIRMA (YENİ API ANAHTARIN) ---
+# --- 1. YAPILANDIRMA (GÜNCEL MODEL) ---
 GOOGLE_API_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI"
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-pro')
+
+# Burayı 'gemini-1.5-flash' olarak güncelledik (Hata veren yer burasıydı)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 st.set_page_config(page_title="Astra Ultra AI", page_icon="🚀")
 
@@ -30,25 +32,22 @@ st.title("🚀 Astra Ultra")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mesaj geçmişini göster
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Kullanıcı sorusu
 if prompt := st.chat_input("Astra'ya her şeyi sor..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Gemini'den cevap al
     with st.chat_message("assistant"):
         try:
-            # Astra'ya kimlik kazandırıyoruz
-            full_prompt = f"Senin adın Astra. Seni Exile (Bedirhan) yarattı. Zeki ve yardımsever ol. Soru: {prompt}"
+            # Astra'ya senin kimliğini öğretiyoruz
+            full_prompt = f"Senin adın Astra. Seni Exile (Bedirhan) yarattı. Zeki, kısa ve öz cevaplar ver. Soru: {prompt}"
             response = model.generate_content(full_prompt)
             astra_reply = response.text
             st.markdown(astra_reply)
             st.session_state.messages.append({"role": "assistant", "content": astra_reply})
         except Exception as e:
-            st.error(f"Bağlantı hatası: {str(e)}")
+            st.error(f"Hala bir sorun var: {str(e)}")
