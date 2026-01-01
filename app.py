@@ -1,66 +1,90 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. ASTRA ÇEKİRDEK (STABİL MODEL) ---
+# --- 1. ÇEKİRDEK BAĞLANTISI ---
+# Streamlit Secrets panelindeki "NOVAKEY" ismini kullanır.
 try:
-    # Secrets panelindeki NOVAKEY'i çağırır
-    ASTRA_CORE_KEY = st.secrets["NOVAKEY"] 
-    genai.configure(api_key=ASTRA_CORE_KEY)
-    
-    # EN STABİL MODEL: 'gemini-pro'
-    # Bu model 404 hatasını aşmak için en güvenli limandır.
-    astra_engine = genai.GenerativeModel('gemini-pro')
+    if "NOVAKEY" in st.secrets:
+        ASTRA_CORE_KEY = st.secrets["NOVAKEY"]
+        genai.configure(api_key=ASTRA_CORE_KEY)
+        # 404 hatasını önlemek için en güncel flash modelini seçiyoruz
+        astra_engine = genai.GenerativeModel('gemini-1.5-flash')
+    else:
+        st.error("⚠️ SİSTEM HATASI: Streamlit Secrets panelinde 'NOVAKEY' bulunamadı.")
+        st.stop()
 except Exception as e:
     st.error(f"⚠️ BAĞLANTI HATASI: {str(e)}")
     st.stop()
 
-# --- 2. NOVA UI ---
-st.set_page_config(page_title="Astra 3.0 Nova", page_icon="☄️")
+# --- 2. GÖRSEL TASARIM (UI) ---
+st.set_page_config(page_title="Astra 3.0 Nova", page_icon="☄️", layout="centered")
+
 st.markdown("""
 <style>
     .stApp { background-color: #050508; color: #ffffff; }
-    .astra-brand {
+    .astra-title {
         font-family: 'Courier New', monospace;
         font-size: 50px;
         font-weight: bold;
         text-align: center;
-        color: #00f2fe;
-        text-shadow: 0 0 15px #7028e4;
+        background: linear-gradient(45deg, #00f2fe, #7028e4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0px;
+    }
+    .exile-credit {
+        text-align: center;
+        font-size: 12px;
+        color: #555;
+        letter-spacing: 5px;
+        margin-bottom: 30px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ERİŞİM SİSTEMİ ---
-if "nova_access" not in st.session_state:
-    st.session_state.nova_access = False
+# --- 3. ERİŞİM KONTROLÜ ---
+if "nova_authenticated" not in st.session_state:
+    st.session_state.nova_authenticated = False
 
-if not st.session_state.nova_access:
-    st.markdown("<div class='astra-brand'>ASTRA 3.0</div>", unsafe_allow_html=True)
+if not st.session_state.nova_authenticated:
+    st.markdown("<div class='astra-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
+    st.markdown("<div class='exile-credit'>CREATED BY EXILE</div>", unsafe_allow_html=True)
+    
     password = st.text_input("Giriş Anahtarı:", type="password")
-    if st.button("SİSTEMİ AÇ"):
+    if st.button("SİSTEMİ UYANDIR"):
         if password == "1234":
-            st.session_state.nova_access = True
+            st.session_state.nova_authenticated = True
             st.rerun()
+        else:
+            st.error("Hatalı Giriş.")
     st.stop()
 
-# --- 4. SOHBET ---
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
+# --- 4. SOHBET ARA YÜZÜ ---
+st.markdown("<div class='astra-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#00f2fe;'>Sinyal Gücü: Maksimum | Operatör: Exile</p>", unsafe_allow_html=True)
 
-for msg in st.session_state.chat_history[-10:]:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if user_input := st.chat_input("Emret Exile..."):
-    st.session_state.chat_history.append({"role": "user", "content": user_input})
+# Mesaj geçmişini ekrana bas
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Kullanıcı girişi
+if prompt := st.chat_input("Bir komut ver, Exile..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Yanıt oluşturma
-            response = astra_engine.generate_content(f"Sen Astra'sın, seni Exile yarattı. Soru: {user_input}")
+            # Astra'ya karakterini hatırlatıyoruz
+            full_prompt = f"Sen Astra 3.0 Nova'sın. Seni Bedirhan (Exile) yarattı. Cevapların kısa, öz ve zekice olsun. Kullanıcı: {prompt}"
+            response = astra_engine.generate_content(full_prompt)
+            
             st.markdown(response.text)
-            st.session_state.chat_history.append({"role": "assistant", "content": response.text})
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"⚠️ KRİTİK HATA: {str(e)}")
+            st.error(f"⚠️ SİNYAL KESİLDİ: {str(e)}")
+            st.info("İpucu: Google Cloud'da API'nin 'Enabled' olduğunu ve anahtarın doğru projeye bağlı olduğunu kontrol et.")
