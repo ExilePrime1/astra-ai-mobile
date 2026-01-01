@@ -1,90 +1,85 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. CONFIG & BEYİN ---
+# --- 1. YAPILANDIRMA ---
 GOOGLE_API_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# 404 Hatasını önlemek için model ismini en güvenli sürümle güncelledik
-try:
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
-except:
-    model = genai.GenerativeModel('gemini-pro')
+# AKILLI MODEL SEÇİCİ (404 HATASINI BİTİRİR)
+@st.cache_resource
+def load_astra_engine():
+    try:
+        # Önce en güncel modelleri listele
+        models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        # Tercih sırasına göre model seç
+        for target in ['models/gemini-1.5-flash-latest', 'models/gemini-1.5-flash', 'models/gemini-pro']:
+            if target in models:
+                return genai.GenerativeModel(target.replace('models/', ''))
+        # Hiçbiri yoksa bulduğun ilk modeli al
+        return genai.GenerativeModel(models[0].replace('models/', ''))
+    except:
+        return genai.GenerativeModel('gemini-1.5-flash')
+
+model = load_astra_engine()
 
 st.set_page_config(page_title="Astra Ultra AI", page_icon="🚀", layout="centered")
 
-# --- 2. ÖZEL TASARIM (MODERN ARAYÜZ) ---
+# --- 2. TASARIM ---
 st.markdown("""
     <style>
     .main { background-color: #0e1117; }
     .stChatMessage { border-radius: 15px; margin-bottom: 10px; }
-    .stTextInput > div > div > input { border-radius: 20px; }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #6c5ce7;
-        color: white;
-        font-weight: bold;
-    }
-    h1 { color: #a29bfe; text-align: center; font-family: 'Trebuchet MS'; }
-    .stInfo { background-color: #2d3436; color: #dfe6e9; border: none; border-radius: 15px; }
+    h1 { color: #a29bfe; text-align: center; }
+    .stButton>button { width: 100%; border-radius: 20px; background-color: #6c5ce7; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. GÜVENLİK SİSTEMİ ---
+# --- 3. GÜVENLİK ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 def login():
-    if st.session_state.password_input == "1234":
+    if st.session_state.get("password_input") == "1234":
         st.session_state.authenticated = True
     else:
-        st.error("❌ Erişim reddedildi!")
+        st.error("❌ Şifre yanlış!")
 
 if not st.session_state.authenticated:
     st.markdown("<h1>🔒 ASTRA ULTRA GİRİŞ</h1>", unsafe_allow_html=True)
-    st.text_input("Giriş Şifresi", type="password", key="password_input", on_change=login)
-    st.button("Sistemi Başlat", on_click=login)
+    st.text_input("Şifre", type="password", key="password_input")
+    st.button("Giriş", on_click=login)
     st.stop()
 
-# --- 4. SOHBET ARAYÜZÜ ---
+# --- 4. SOHBET ---
 st.markdown("<h1>🚀 ASTRA ULTRA</h1>", unsafe_allow_html=True)
-st.caption("Geliştirici: Exile (Bedirhan) | Sürüm: 2.5 Pro")
-st.divider()
+st.caption(f"Aktif Model: {model.model_name} | Geliştirici: Exile")
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "assistant", "content": "Merhaba Bedirhan! Ben Astra. Senin için ne yapabilirim?"}]
+    st.session_state.messages = [{"role": "assistant", "content": "Merhaba Bedirhan! Astra hazır."}]
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-if prompt := st.chat_input("Mesajınızı buraya yazın..."):
+if prompt := st.chat_input("Sorunuzu yazın..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Astra düşünüyor..."):
-            try:
-                full_prompt = f"Senin adın Astra. Seni Bedirhan (Exile) yarattı. Zeki ol. Soru: {prompt}"
-                response = model.generate_content(full_prompt)
-                
-                if response.text:
-                    astra_reply = response.text
-                    st.markdown(astra_reply)
-                    st.session_state.messages.append({"role": "assistant", "content": astra_reply})
-            except Exception as e:
-                # 404 hatasını yakalayıp kullanıcıya bilgi veriyoruz
-                st.error(f"Sistem Hatası: {str(e)}")
+        try:
+            full_prompt = f"Senin adın Astra. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
+            response = model.generate_content(full_prompt)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            st.error(f"⚠️ Kritik Hata: {str(e)}")
 
-# --- 5. AYARLAR (YENİLENMİŞ SIDEBAR) ---
+# --- 5. AYARLAR ---
 with st.sidebar:
-    st.title("⚙️ Sistem Paneli")
-    st.write("📌 **Sistem Durumu:** Aktif")
-    st.write("🤖 **Yapay Zeka:** AstraUltra 2.0 Pro") 
-    st.write("👤 **Geliştirici:** Exile")
-    st.divider()
-    if st.button("Sohbet Geçmişini Sil"):
+    st.title("⚙️ Ayarlar")
+    st.write("🤖 **Sistem:** AstraUltra 2.0 Pro")
+    st.write("👤 **Sahip:** Exile")
+    if st.button("Geçmişi Sil"):
         st.session_state.messages = []
         st.rerun()
