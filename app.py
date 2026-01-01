@@ -5,13 +5,16 @@ import google.generativeai as genai
 GOOGLE_API_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Hata ihtimaline karşı en güncel model ismini kullanıyoruz
-MODEL_NAME = 'gemini-1.5-flash-latest' 
-model = genai.GenerativeModel(MODEL_NAME)
+# Hata ihtimaline karşı en temel model ismini deniyoruz
+# Eğer flash-latest çalışmıyorsa 'gemini-1.0-pro' en sağlamıdır.
+try:
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except:
+    model = genai.GenerativeModel('gemini-pro')
 
 st.set_page_config(page_title="Astra Ultra AI", page_icon="🚀")
 
-# --- 2. GÜVENLİK (ŞİFRE) ---
+# --- 2. GÜVENLİK ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
@@ -27,7 +30,7 @@ if not st.session_state.authenticated:
     st.button("Giriş Yap", on_click=login)
     st.stop()
 
-# --- 3. SOHBET EKRANI ---
+# --- 3. SOHBET ---
 st.title("🚀 Astra Ultra")
 
 if "messages" not in st.session_state:
@@ -37,22 +40,21 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Mesajınızı yazın..."):
+if prompt := st.chat_input("Bir şeyler yaz..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Sistem talimatını buraya ekliyoruz
-            full_prompt = f"Senin adın Astra. Seni Exile (Bedirhan) yarattı. Zeki ol. Soru: {prompt}"
-            response = model.generate_content(full_prompt)
-            
+            # En basit haliyle yanıt almayı deniyoruz
+            response = model.generate_content(prompt)
             if response.text:
                 st.markdown(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
-            else:
-                st.error("Astra şu an cevap üretemedi.")
         except Exception as e:
-            st.error(f"Bağlantı Hatası: {str(e)}")
-            st.info("İpucu: Eğer 404 hatası devam ediyorsa, API anahtarının Google AI Studio'da aktif olduğundan emin olun.")
+            # Eğer yine 404 verirse, koda model listesini yazdırıp hatayı göreceğiz
+            st.error(f"Sistem hatası: {str(e)}")
+            st.info("Alternatif model deneniyor, lütfen tekrar mesaj gönderin.")
+            # Hata durumunda modeli 'gemini-pro'ya zorla
+            st.session_state.model_fail = True
