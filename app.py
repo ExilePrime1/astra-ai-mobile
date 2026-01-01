@@ -1,20 +1,19 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. SİSTEM BAĞLANTISI ---
+# --- 1. ÇEKİRDEK BAĞLANTISI ---
 try:
-    # Streamlit Secrets panelinden NOVAKEY'i çeker
     if "NOVAKEY" in st.secrets:
-        # Yeni AstraNova anahtarını yapılandırır
+        # Streamlit Secrets'taki yeni AstraNova anahtarını bağla
         genai.configure(api_key=st.secrets["NOVAKEY"])
         
-        # En stabil model sürümü (404 hatasını önlemek için)
-        astra_engine = genai.GenerativeModel('gemini-1.5-flash')
+        # 404 HATASINI BİTİREN KRİTİK SATIR: 'models/' ön eki şarttır
+        astra_engine = genai.GenerativeModel('models/gemini-1.5-flash')
     else:
         st.error("⚠️ SİSTEM DURDURULDU: Streamlit Secrets panelinde 'NOVAKEY' eksik!")
         st.stop()
 except Exception as e:
-    st.error(f"⚠️ KRİTİK BAĞLANTI HATASI: {str(e)}")
+    st.error(f"⚠️ BAĞLANTI HATASI: {str(e)}")
     st.stop()
 
 # --- 2. GÖRSEL TASARIM (CSS) ---
@@ -44,17 +43,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 3. ERİŞİM KONTROLÜ ---
-if "nova_authenticated" not in st.session_state:
-    st.session_state.nova_authenticated = False
+if "nova_auth" not in st.session_state:
+    st.session_state.nova_auth = False
 
-if not st.session_state.nova_authenticated:
+if not st.session_state.nova_auth:
     st.markdown("<div class='astra-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
     st.markdown("<div class='exile-credit'>CREATED BY EXILE</div>", unsafe_allow_html=True)
     
     password = st.text_input("Giriş Anahtarı:", type="password", placeholder="Şifreyi giriniz...")
     if st.button("SİSTEMİ UYANDIR"):
         if password == "1234":
-            st.session_state.nova_authenticated = True
+            st.session_state.nova_auth = True
             st.rerun()
         else:
             st.error("Erişim Reddedildi.")
@@ -80,13 +79,12 @@ if prompt := st.chat_input("Emret Exile..."):
 
     with st.chat_message("assistant"):
         try:
-            # Astra'nın karakter kimliği
-            system_instruction = f"Sen Astra 3.0 Nova'sın. Seni Bedirhan (Exile) yarattı. Zekice ve özlü cevaplar ver. Soru: {prompt}"
-            
-            response = astra_engine.generate_content(system_instruction)
+            # Karakter kimliği ve cevap üretimi
+            full_prompt = f"Sen Astra 3.0 Nova'sın. Seni Bedirhan (Exile) yarattı. Zekice cevap ver. Soru: {prompt}"
+            response = astra_engine.generate_content(full_prompt)
             
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
             st.error(f"⚠️ SİNYAL KESİLDİ: {str(e)}")
-            st.info("İpucu: Streamlit Secrets panelindeki NOVAKEY değerini yeni AstraNova anahtarınla değiştirdiğinden emin ol.")
+            st.info("Eğer hata 404 ise: Google Cloud'da 'Generative Language API'yi DISABLE yapıp tekrar ENABLE etmelisin.")
