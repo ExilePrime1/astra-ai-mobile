@@ -5,8 +5,11 @@ import google.generativeai as genai
 GOOGLE_API_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Arka planda yine en güçlü model olan Flash çalışacak ama adı Astra görünecek
-model = genai.GenerativeModel('gemini-1.5-flash')
+# 404 Hatasını önlemek için model ismini en güvenli sürümle güncelledik
+try:
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+except:
+    model = genai.GenerativeModel('gemini-pro')
 
 st.set_page_config(page_title="Astra Ultra AI", page_icon="🚀", layout="centered")
 
@@ -36,11 +39,10 @@ def login():
     if st.session_state.password_input == "1234":
         st.session_state.authenticated = True
     else:
-        st.error("❌ Erişim reddedildi! Lütfen Exile tarafından belirlenen şifreyi girin.")
+        st.error("❌ Erişim reddedildi!")
 
 if not st.session_state.authenticated:
     st.markdown("<h1>🔒 ASTRA ULTRA GİRİŞ</h1>", unsafe_allow_html=True)
-    st.info("Bu sistem Bedirhan (Exile) tarafından özel olarak geliştirilmiştir.")
     st.text_input("Giriş Şifresi", type="password", key="password_input", on_change=login)
     st.button("Sistemi Başlat", on_click=login)
     st.stop()
@@ -65,27 +67,21 @@ if prompt := st.chat_input("Mesajınızı buraya yazın..."):
     with st.chat_message("assistant"):
         with st.spinner("Astra düşünüyor..."):
             try:
-                full_prompt = f"Senin adın Astra. Seni Bedirhan (Exile) yarattı. Cevapların çok zeki ve yardımsever olsun. Soru: {prompt}"
+                full_prompt = f"Senin adın Astra. Seni Bedirhan (Exile) yarattı. Zeki ol. Soru: {prompt}"
                 response = model.generate_content(full_prompt)
                 
                 if response.text:
                     astra_reply = response.text
                     st.markdown(astra_reply)
                     st.session_state.messages.append({"role": "assistant", "content": astra_reply})
-                else:
-                    st.warning("Astra şu an yanıt veremiyor.")
-            
             except Exception as e:
-                if "429" in str(e):
-                    st.error("🚀 Kota Sınırı! Lütfen biraz bekleyip tekrar dene.")
-                else:
-                    st.error(f"⚠️ Bağlantı Sorunu: {str(e)}")
+                # 404 hatasını yakalayıp kullanıcıya bilgi veriyoruz
+                st.error(f"Sistem Hatası: {str(e)}")
 
-# --- 5. AYARLAR (İSTEDİĞİN GÜNCELLEME BURADA) ---
+# --- 5. AYARLAR (YENİLENMİŞ SIDEBAR) ---
 with st.sidebar:
     st.title("⚙️ Sistem Paneli")
     st.write("📌 **Sistem Durumu:** Aktif")
-    # Gemini yazısını senin istediğinle değiştirdik:
     st.write("🤖 **Yapay Zeka:** AstraUltra 2.0 Pro") 
     st.write("👤 **Geliştirici:** Exile")
     st.divider()
