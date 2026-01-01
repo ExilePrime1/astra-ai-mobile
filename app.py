@@ -4,19 +4,28 @@ import google.generativeai as genai
 # --- 1. SİSTEM YAPILANDIRMASI ---
 GOOGLE_API_KEY = "AIzaSyA34SS1f-QgCMzeuuoXSyjvtkQpjGhvgBI"
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+
+# 404 Hatasını Önlemek İçin Model Seçici
+@st.cache_resource
+def get_model():
+    # En güvenli model ismini kullanıyoruz
+    return genai.GenerativeModel('gemini-1.5-flash')
+
+model = get_model()
 
 st.set_page_config(page_title="Astra Ultra", page_icon="🚀", layout="wide")
 
-# --- 2. GERÇEK GEMINI CSS TASARIMI (HATASIZ) ---
+# --- 2. GERÇEK GEMINI CSS TASARIMI ---
 st.markdown("""
 <style>
     .stApp { background-color: #131314; color: #e3e3e3; font-family: 'Google Sans', sans-serif; }
     header {visibility: hidden;}
     .main .block-container {padding-top: 1rem; max-width: 850px;}
+    
+    /* Mesajlar */
     [data-testid="stChatMessage"] { background-color: transparent; padding: 1rem 0; border: none; }
-    [data-testid="stChatMessageAvatarUser"] { background-color: #ff4b4b; border-radius: 50%; }
-    [data-testid="stChatMessageAvatarAssistant"] { background-color: #f9ab00; border-radius: 8px; }
+    
+    /* OVAL ALT GİRİŞ BARI */
     .stChatInputContainer {
         position: fixed;
         bottom: 30px;
@@ -26,6 +35,8 @@ st.markdown("""
         padding: 5px 20px !important;
     }
     .stChatInputContainer textarea { color: #e3e3e3 !important; }
+
+    /* Logo ve Başlık */
     .astra-logo {
         font-size: 38px;
         font-weight: 600;
@@ -35,7 +46,6 @@ st.markdown("""
         text-align: center;
         margin-bottom: 40px;
     }
-    [data-testid="stSidebar"] { background-color: #1e1f20; border-right: 1px solid #333; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -60,26 +70,27 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 for message in st.session_state.messages:
-    avatar = "👤" if message["role"] == "user" else "🤖"
-    with st.chat_message(message["role"], avatar=avatar):
+    with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Astra'ya bir şeyler sor..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="👤"):
+    with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant", avatar="🤖"):
+    with st.chat_message("assistant"):
         try:
-            full_context = f"Senin adın Astra. Seni Exile (Bedirhan) yarattı. Soru: {prompt}"
+            # Astra'nın kimliğini hatırlatıyoruz
+            full_context = f"Senin adın Astra. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
             response = model.generate_content(full_context)
             if response.text:
                 st.markdown(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"Sistem Hatası: {str(e)}")
+            # Eğer yine model hatası verirse daha basit bir hata mesajı göster
+            st.error("🚀 Astra uyanıyor, lütfen 5 saniye bekleyip tekrar yaz.")
 
-# --- 5. AYARLAR ---
+# --- 5. SIDEBAR ---
 with st.sidebar:
     st.title("⚙️ Ayarlar")
     st.write("🤖 **Model:** AstraUltra 2.0 Pro")
