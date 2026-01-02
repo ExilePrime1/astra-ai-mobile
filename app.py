@@ -7,7 +7,6 @@ st.set_page_config(page_title="AstraUltra", page_icon="💫", layout="wide")
 
 if "NOVAKEY" in st.secrets:
     genai.configure(api_key=st.secrets["NOVAKEY"])
-    astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
 else:
     st.error("API ANAHTARI EKSİK!")
     st.stop()
@@ -20,20 +19,25 @@ st.markdown("""
         background-size: 400% 400%;
         animation: flowBG 15s ease infinite;
     }
-    @keyframes flowBG {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
+    @keyframes flowBG { 0% {background-position:0% 50%} 50% {background-position:100% 50%} 100% {background-position:0% 50%} }
+    
     .ultra-title {
         font-family: 'Orbitron', sans-serif;
         font-size: 60px; font-weight: 900; text-align: center;
         background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8, #00f2fe);
         background-size: 200% auto;
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        animation: ultra-glow 6s linear infinite;
+        animation: ultra-glow 5s linear infinite;
     }
     @keyframes ultra-glow { to { background-position: 200% center; } }
+
+    /* Seçenek Butonlarını Şıklaştır */
+    div[data-testid="stHorizontalBlock"] {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 5px;
+        margin-bottom: -10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -47,6 +51,13 @@ for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
+# --- 4. MOD SEÇENEKLERİ (Yazı Yerinin Hemen Üstünde) ---
+# st.columns kullanarak butonları yazı alanına yaklaştırıyoruz
+col1, col2, col3 = st.columns([1,1,1])
+with col1:
+    mode = st.radio("🧠 Mod Seç:", ["Hızlı", "Dengeli", "Pro"], horizontal=True, label_visibility="collapsed")
+
+# Giriş Alanı
 if prompt := st.chat_input("Astraya sorun"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -54,17 +65,31 @@ if prompt := st.chat_input("Astraya sorun"):
 
     with st.chat_message("assistant"):
         try:
-            # AKILLI KİMLİK MANTIĞI: Eğer ilk mesajsa kendini tanıt, değilse doğrudan cevap ver.
-            if len(st.session_state.messages) <= 2:
-                identity_prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zekayım. "
+            # Seçilen moda göre motoru belirle
+            if mode == "Hızlı":
+                model_name = 'models/gemini-2.5-flash'
+                mode_note = "🚀 Hızlı Mod"
+            elif mode == "Pro":
+                model_name = 'models/gemini-2.5-pro'
+                mode_note = "💎 Pro Mod (Derin Düşünme)"
             else:
-                identity_prefix = ""
+                model_name = 'models/gemini-2.5-flash' # Dengeli için de flash kullanabiliriz
+                mode_note = "⚖️ Dengeli Mod"
 
-            context = f"Sen AstraUltra'sın. Bedirhan (Exile) seni yarattı. Soru: {prompt}"
-            response = astra_engine.generate_content(context)
+            astra_engine = genai.GenerativeModel(model_name)
+
+            # Kimlik tanımı (Sadece ilk mesajda)
+            prefix = ""
+            if len(st.session_state.messages) <= 2:
+                prefix = "Sen AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
+
+            with st.spinner(f"AstraUltra {mode} çekirdeği ile düşünüyor..."):
+                context = f"Sen AstraUltra'sın. Bedirhan (Exile) seni yarattı. Soru: {prompt}"
+                response = astra_engine.generate_content(context)
             
-            full_response = identity_prefix + response.text
-            st.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            final_text = prefix + response.text
+            st.markdown(final_text)
+            st.caption(f"Aktif Çekirdek: {mode_note}")
+            st.session_state.messages.append({"role": "assistant", "content": final_text})
         except Exception as e:
-            st.error(f"Bağlantı Hatası: {e}")
+            st.error(f"Sinyal Hatası: {e}")
