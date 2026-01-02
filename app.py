@@ -1,93 +1,81 @@
 import streamlit as st
 import google.generativeai as genai
 import time
+import random
 
 # --- 1. SİSTEM YAPILANDIRMASI ---
-st.set_page_config(page_title="ASTRA NOVA PRO", page_icon="💠", layout="wide")
+st.set_page_config(page_title="ASTRA GHOST PROTOCOL", page_icon="🧬", layout="wide")
 
 if "NOVAKEY" in st.secrets:
     genai.configure(api_key=st.secrets["NOVAKEY"])
+    astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
 else:
-    st.error("⚠️ API ANAHTARI EKSİK!")
+    st.error("Sistem Anahtarı Bulunamadı!")
     st.stop()
 
-# --- 2. GELİŞMİŞ CYBER ARAYÜZ (CSS) ---
-st.markdown("""
-<style>
-    .stApp { background: #050508 !important; color: #00f2fe !important; }
-    
-    /* RGB Başlık */
-    .astra-logo {
-        font-family: 'Courier New', monospace;
-        font-size: 50px; font-weight: 900; text-align: center;
-        background: linear-gradient(90deg, #ff0000, #00ff00, #0000ff, #ff0000);
-        background-size: 200% auto; -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent; animation: glow 3s linear infinite;
-    }
-    @keyframes glow { to { background-position: 200% center; } }
+# --- 2. GÖRÜLMEMİŞ DİNAMİK TASARIM (CSS) ---
+# Yazı rengi ve gölge, kullanıcının moduna göre kod tarafından değiştirilecek
+if "dna_color" not in st.session_state:
+    st.session_state.dna_color = "#00f2fe"
 
-    /* Mesaj Kutuları */
-    .stChatMessage {
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid #7028e4 !important;
-        border-radius: 15px !important;
-    }
+st.markdown(f"""
+<style>
+    .stApp {{
+        background: radial-gradient(circle at center, #050508 0%, #000000 100%) !important;
+    }}
+    .dna-title {{
+        font-family: 'Orbitron', sans-serif;
+        font-size: 60px; font-weight: 900; text-align: center;
+        color: {st.session_state.dna_color} !important;
+        text-shadow: 0 0 20px {st.session_state.dna_color};
+        transition: all 2s ease;
+    }}
+    .ghost-text {{
+        font-family: 'Courier New', monospace;
+        color: #111; text-align: center; font-size: 12px;
+    }}
 </style>
-<div class="astra-logo">ASTRA 3.0</div>
-<p style="text-align:center; color:#444; font-size:10px; letter-spacing:5px;">DESIGNED BY EXILE</p>
 """, unsafe_allow_html=True)
 
-# --- 3. ÜÇ NOKTA (SIDEBAR) ÖZELLİKLERİ ---
-with st.sidebar:
-    st.markdown("### 💠 ASTRA KONTROL MERKEZİ")
-    st.write(f"🛡️ **Operatör:** Bedirhan (Exile)")
-    
-    st.markdown("---")
-    # Özellik 1: Kişilik Seçimi
-    mood = st.selectbox("🎭 Astra Kişiliği:", ["Ciddi & Profesyonel", "Esprili & Arkadaş Canlısı", "Kısa & Öz"])
-    
-    # Özellik 2: Dosya Analizi
-    uploaded_file = st.file_uploader("📂 Veri Yükle (Resim/PDF)", type=['png', 'jpg', 'pdf', 'txt'])
-    
-    # Özellik 3: Bellek Yönetimi
-    if st.button("🗑️ Sohbeti Sıfırla"):
-        st.session_state.messages = []
-        st.rerun()
-    
-    # Özellik 4: Sistem İstatistikleri
-    st.markdown("---")
-    st.write("🛰️ **Bağlantı:** Güçlü")
-    st.write("🧬 **Çekirdek:** Astra 3.0 Nova")
-
-# --- 4. ERİŞİM PANELİ ---
+# --- 3. HAYALET PROTOKOLÜ (GÜVENLİK) ---
 if "auth" not in st.session_state:
     st.session_state.auth = False
+    st.session_state.attempts = 0
 
 if not st.session_state.auth:
-    pw = st.text_input("SİSTEM ŞİFRESİ:", type="password")
-    if st.button("SİSTEME GİR"):
+    st.markdown("<div class='dna-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
+    
+    if st.session_state.attempts >= 3:
+        st.warning("⚠️ SİSTEM KİLİTLENDİ: GHOST PROTOCOL AKTİF.")
+        st.markdown("<p class='ghost-text'>Veri tabanı siliniyor... (Simülasyon)</p>", unsafe_allow_html=True)
+        time.sleep(5)
+        st.session_state.attempts = 0 # Gerçekte sıfırlıyoruz ama kullanıcıyı korkutuyoruz
+        
+    pw = st.text_input("Biyometrik Anahtar (Şifre):", type="password")
+    if st.button("SİSTEME SIZ"):
         if pw == "1234":
             st.session_state.auth = True
             st.rerun()
+        else:
+            st.session_state.attempts += 1
+            st.error(f"Hatalı Giriş! Kalan Hak: {3 - st.session_state.attempts}")
     st.stop()
 
-# --- 5. MOTOR SEÇİMİ (YAZI ALANININ ÜSTÜ) ---
-# Özellik 5: Hızlı ve Pro Seçenekleri
-engine_choice = st.radio(
-    "🧠 Zeka Modu Seç:",
-    ["🚀 Hızlı Astra (Flash)", "💎 Pro Astra (Zeka Odaklı)"],
-    horizontal=True
-)
+# --- 4. ANA PANEL VE YENİ ÖZELLİKLER ---
+st.markdown("<div class='dna-title'>ASTRA ULTIMATE</div>", unsafe_allow_html=True)
 
-# Motoru seçilen moda göre ayarla
-if "Pro" in engine_choice:
-    selected_model = 'models/gemini-2.5-pro'
-else:
-    selected_model = 'models/gemini-2.5-flash'
+with st.sidebar:
+    st.markdown("### 🧬 DNA & GHOST PANEL")
+    st.write(f"👤 **Master:** Exile")
+    st.write("---")
+    # Özellik: Paralel Evren Analizi
+    parallel_mode = st.toggle("🌌 Paralel Evren Analizi", value=True)
+    st.markdown("---")
+    if st.button("🗑️ İzleri Sil (Clear)"):
+        st.session_state.messages = []
+        st.rerun()
 
-astra_engine = genai.GenerativeModel(selected_model)
-
-# --- 6. SOHBET AKIŞI ---
+# --- 5. SOHBET VE DUYGU ANALİZİ (DÜNYADA İLK) ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -95,29 +83,34 @@ for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-if prompt := st.chat_input("Emret Exile..."):
+if prompt := st.chat_input("Exile, zihnini sisteme bağla..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    # Duygu Analizi ve Renk Değişimi
+    if any(kelime in prompt.lower() for kelime in ["hızlı", "savaş", "yap", "hemen"]):
+        st.session_state.dna_color = "#ff0000" # Agresif/Hızlı Mod (Kırmızı)
+    elif any(kelime in prompt.lower() for kelime in ["selam", "merhaba", "nasılsın"]):
+        st.session_state.dna_color = "#00ff00" # Dost Modu (Yeşil)
+    else:
+        st.session_state.dna_color = "#00f2fe" # Standart Mod (Mavi)
+
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Özellik 6: Yükleme Animasyonu
-        with st.spinner("Astra düşünüyor..."):
-            try:
-                # Özellik 7: Bağlamsal Talimat
-                full_instruction = f"Sen Astra 3.0'sın. Bedirhan (Exile) seni yarattı. Modun: {mood}. Soru: {prompt}"
-                
-                # Özellik 8: Çoklu Giriş (Dosya + Metin)
-                if uploaded_file:
-                    response = astra_engine.generate_content([full_instruction, uploaded_file])
-                else:
-                    response = astra_engine.generate_content(full_instruction)
-                
-                # Özellik 9: Zaman Damgası (Caption)
-                st.markdown(response.text)
-                st.caption(f"✅ {selected_model} motoru kullanıldı. | {time.strftime('%H:%M')}")
-                st.session_state.messages.append({"role": "assistant", "content": response.text})
-                
-                # Özellik 10: Sesli Yanıt (Gelecekteki eklenti için altyapı)
-            except Exception as e:
-                st.error(f"Sinyal Hatası: {e}")
+        try:
+            # Ana Yanıt
+            main_resp = astra_engine.generate_content(f"Sen Astra'sın. Exile seni yarattı. Soru: {prompt}")
+            st.markdown(main_resp.text)
+            
+            # PARALEL EVREN ÖZELLİĞİ
+            if parallel_mode:
+                with st.expander("🌌 Paralel Evren Senaryosu (Farklı Bir Olasılık)"):
+                    alt_resp = astra_engine.generate_content(f"Bu soruya ('{prompt}') bambaşka, daha karanlık veya daha sanatsal bir alternatif cevap ver.")
+                    st.write(alt_resp.text)
+            
+            st.session_state.messages.append({"role": "assistant", "content": main_resp.text})
+            st.rerun() # Renk değişimini anlık yansıtmak için
+            
+        except Exception as e:
+            st.error(f"Sinyal Bozulması: {e}")
