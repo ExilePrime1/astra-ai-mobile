@@ -2,121 +2,89 @@ import streamlit as st
 import google.generativeai as genai
 import time
 
-# --- 1. SİSTEM YAPILANDIRMASI ---
+# --- 1. SİSTEM BAŞLATMA ---
 st.set_page_config(page_title="AstraUltra", page_icon="💫", layout="wide")
 
-# API Anahtarı ve Model Tanımlama
-try:
-    if "NOVAKEY" in st.secrets:
-        genai.configure(api_key=st.secrets["NOVAKEY"])
-        astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
-    else:
-        st.error("API ANAHTARI EKSİK! Lütfen Streamlit Secrets kısmına 'NOVAKEY' ekleyin.")
-        st.stop()
-except Exception as e:
-    pass
+# API Anahtarı Yönetimi
+if "api_key" not in st.session_state:
+    st.session_state.api_key = st.secrets.get("NOVAKEY", "")
 
-# --- 2. GÖRSEL TASARIM (RGB & FLOW CSS) ---
+def configure_astra():
+    if st.session_state.api_key:
+        genai.configure(api_key=st.session_state.api_key)
+        return genai.GenerativeModel('models/gemini-2.5-flash')
+    return None
+
+astra_engine = configure_astra()
+
+# --- 2. CSS ---
 st.markdown("""
 <style>
-    /* Arka Plan ve Genel Tema */
-    .stApp {
-        background: radial-gradient(circle at center, #050510 0%, #000000 100%);
-        color: #e0e0e0;
-    }
-    
-    /* AstraUltra Başlığı - Yumuşak RGB Geçişi */
+    .stApp { background: #000; color: #00f2fe; }
     .astra-title {
         font-family: 'Orbitron', sans-serif;
-        font-size: 60px; font-weight: 900; text-align: center;
-        background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8, #00f2fe);
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 50px; text-align: center;
+        background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         animation: flow 5s linear infinite;
-        margin-bottom: 20px;
     }
     @keyframes flow { to { background-position: 200% center; } }
-
-    /* Enerji Yenileme Ekranı Tasarımı */
-    .recovery-box {
-        text-align: center; padding: 40px; border: 2px solid #7028e4;
-        border-radius: 20px; background: rgba(112, 40, 228, 0.1);
-        margin-top: 50px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DÖNGÜ VE KOTA YÖNETİMİ ---
-if "counter" not in st.session_state:
-    st.session_state.counter = 0
-if "force_recovery" not in st.session_state:
-    st.session_state.force_recovery = False
+# --- 3. DÖNGÜ VE KOTA TAKİBİ ---
+if "counter" not in st.session_state: st.session_state.counter = 0
+if "error_loop" not in st.session_state: st.session_state.error_loop = False
 
-# --- 4. ENERJİ YENİLEME EKRANI (Her 19 Soruda veya Hata Durumunda) ---
-if st.session_state.counter >= 19 or st.session_state.force_recovery:
+# --- 4. KRİTİK YENİLEME EKRANI ---
+if st.session_state.counter >= 19 or st.session_state.error_loop:
     st.markdown("<div class='astra-title'>AstraUltra</div>", unsafe_allow_html=True)
-    st.markdown("<div class='recovery-box'>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#7028e4;'>🔄 ENERJİ YENİLENİYOR</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#888;'>Exile Protokolü: Kota limitleri bypass ediliyor ve çekirdek soğutuluyor...</p>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:center; padding:30px; border:2px solid #7028e4; border-radius:15px; background:rgba(112,40,228,0.1);'>", unsafe_allow_html=True)
     
-    timer_display = st.empty()
-    progress_bar = st.progress(0)
-    
-    for i in range(20, -1, -1):
-        percent = (20 - i) * 5
-        timer_display.markdown(f"<h1 style='color:#00f2fe;'>{i}s</h1>", unsafe_allow_html=True)
-        progress_bar.progress(percent)
-        time.sleep(1)
-    
-    # Sıfırlama ve Yeniden Başlatma
-    st.session_state.counter = 0
-    st.session_state.force_recovery = False
-    st.session_state.messages = [] # Temiz bir başlangıç için hafızayı boşaltır
-    st.rerun()
+    if st.session_state.error_loop:
+        st.error("🚫 GOOGLE GÜNLÜK KOTASI TAMAMEN DOLDU!")
+        new_key = st.text_input("Devam etmek için yeni bir API Key gir (Veya yarını bekle):", type="password")
+        if st.button("Enerji Çekirdeğini Yenile"):
+            st.session_state.api_key = new_key
+            st.session_state.error_loop = False
+            st.session_state.counter = 0
+            st.rerun()
+    else:
+        st.markdown("<h2 style='color:#7028e4;'>🔄 ENERJİ YENİLENİYOR (20s)</h2>", unsafe_allow_html=True)
+        p_bar = st.progress(0)
+        for i in range(20, -1, -1):
+            p_bar.progress((20-i)*5)
+            time.sleep(1)
+        st.session_state.counter = 0
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
 
-# --- 5. ANA KULLANICI ARAYÜZÜ ---
+# --- 5. ANA PANEL ---
 st.markdown("<div class='astra-title'>AstraUltra</div>", unsafe_allow_html=True)
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "messages" not in st.session_state: st.session_state.messages = []
 
-# Mesaj Geçmişini Görüntüle
 for m in st.session_state.messages:
-    with st.chat_message(m["role"]):
-        st.markdown(m["content"])
+    with st.chat_message(m["role"]): st.markdown(m["content"])
 
-# Giriş Alanı: "Astraya sorun"
 if prompt := st.chat_input("Astraya sorun"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Akıllı Kimlik (Sadece ilk mesajda görünür)
-            prefix = ""
-            if len(st.session_state.messages) <= 2:
-                prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
+            # Sadece ilk mesajda kimlik
+            prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. " if len(st.session_state.messages) <= 2 else ""
             
-            with st.spinner("Düşünüyor..."):
-                # AI Yanıtı Oluşturma
-                context = f"Sen AstraUltra'sın. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
-                response = astra_engine.generate_content(context)
-                
-                # Sayaç Artırımı ve Yanıtın Basılması
+            with st.spinner("İşleniyor..."):
+                response = astra_engine.generate_content(f"Sen AstraUltra'sın. Soru: {prompt}")
                 st.session_state.counter += 1
-                final_response = prefix + response.text
-                st.markdown(final_response)
-                st.session_state.messages.append({"role": "assistant", "content": final_response})
-                
-                # Durum Takibi (Sidebar)
-                st.sidebar.markdown(f"📊 **Döngü:** {st.session_state.counter} / 19")
-
+                st.markdown(prefix + response.text)
+                st.session_state.messages.append({"role": "assistant", "content": prefix + response.text})
         except Exception as e:
-            # Herhangi bir kota hatasında (429) anında yenileme ekranına zıpla
-            if "429" in str(e) or "quota" in str(e).lower():
-                st.session_state.force_recovery = True
+            if "429" in str(e):
+                st.session_state.error_loop = True
                 st.rerun()
             else:
-                st.error(f"Teknik bir sorun oluştu: {e}")
+                st.error(f"Hata: {e}")
