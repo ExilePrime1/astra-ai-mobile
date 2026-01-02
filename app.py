@@ -1,81 +1,56 @@
 import streamlit as st
 import google.generativeai as genai
 import time
-import random
 
-# --- 1. SİSTEM YAPILANDIRMASI ---
-st.set_page_config(page_title="ASTRA GHOST PROTOCOL", page_icon="🧬", layout="wide")
+# --- 1. CORE CONFIG ---
+st.set_page_config(page_title="AstraUltra", page_icon="💫", layout="wide")
 
 if "NOVAKEY" in st.secrets:
     genai.configure(api_key=st.secrets["NOVAKEY"])
     astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
 else:
-    st.error("Sistem Anahtarı Bulunamadı!")
+    st.error("API ANAHTARI EKSİK!")
     st.stop()
 
-# --- 2. GÖRÜLMEMİŞ DİNAMİK TASARIM (CSS) ---
-# Yazı rengi ve gölge, kullanıcının moduna göre kod tarafından değiştirilecek
-if "dna_color" not in st.session_state:
-    st.session_state.dna_color = "#00f2fe"
-
-st.markdown(f"""
+# --- 2. INFINITE RGB FLOW (CSS) ---
+st.markdown("""
 <style>
-    .stApp {{
-        background: radial-gradient(circle at center, #050508 0%, #000000 100%) !important;
-    }}
-    .dna-title {{
+    .stApp {
+        background: linear-gradient(125deg, #000000, #050510, #0a0015, #000000);
+        background-size: 400% 400%;
+        animation: flowBG 15s ease infinite;
+    }
+    @keyframes flowBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .ultra-title {
         font-family: 'Orbitron', sans-serif;
         font-size: 60px; font-weight: 900; text-align: center;
-        color: {st.session_state.dna_color} !important;
-        text-shadow: 0 0 20px {st.session_state.dna_color};
-        transition: all 2s ease;
-    }}
-    .ghost-text {{
+        background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8, #00f2fe);
+        background-size: 200% auto;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: ultra-glow 6s linear infinite;
+    }
+    @keyframes ultra-glow { to { background-position: 200% center; } }
+    
+    /* Zihin Yansıtma Kutusu */
+    .thought-process {
+        background: rgba(0, 242, 254, 0.05);
+        border-left: 2px solid #7028e4;
+        padding: 10px;
         font-family: 'Courier New', monospace;
-        color: #111; text-align: center; font-size: 12px;
-    }}
+        font-size: 13px;
+        color: #00f2fe;
+        margin-bottom: 10px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HAYALET PROTOKOLÜ (GÜVENLİK) ---
-if "auth" not in st.session_state:
-    st.session_state.auth = False
-    st.session_state.attempts = 0
+st.markdown("<div class='ultra-title'>AstraUltra</div>", unsafe_allow_html=True)
 
-if not st.session_state.auth:
-    st.markdown("<div class='dna-title'>ASTRA 3.0</div>", unsafe_allow_html=True)
-    
-    if st.session_state.attempts >= 3:
-        st.warning("⚠️ SİSTEM KİLİTLENDİ: GHOST PROTOCOL AKTİF.")
-        st.markdown("<p class='ghost-text'>Veri tabanı siliniyor... (Simülasyon)</p>", unsafe_allow_html=True)
-        time.sleep(5)
-        st.session_state.attempts = 0 # Gerçekte sıfırlıyoruz ama kullanıcıyı korkutuyoruz
-        
-    pw = st.text_input("Biyometrik Anahtar (Şifre):", type="password")
-    if st.button("SİSTEME SIZ"):
-        if pw == "1234":
-            st.session_state.auth = True
-            st.rerun()
-        else:
-            st.session_state.attempts += 1
-            st.error(f"Hatalı Giriş! Kalan Hak: {3 - st.session_state.attempts}")
-    st.stop()
-
-# --- 4. ANA PANEL VE YENİ ÖZELLİKLER ---
-st.markdown("<div class='dna-title'>ASTRA ULTIMATE</div>", unsafe_allow_html=True)
-
-with st.sidebar:
-    st.markdown("### 🧬 DNA & GHOST PANEL")
-    st.write(f"👤 **Master:** Exile")
-    st.write("---")
-    # Özellik: Paralel Evren Analizi
-    parallel_mode = st.toggle("🌌 Paralel Evren Analizi", value=True)
-    st.markdown("---")
-    if st.button("🗑️ İzleri Sil (Clear)"):
-        st.session_state.messages = []
-        st.rerun()
-
-# --- 5. SOHBET VE DUYGU ANALİZİ (DÜNYADA İLK) ---
+# --- 3. SOHBET VE ZİHİN YANSITMA ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -83,34 +58,26 @@ for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-if prompt := st.chat_input("Exile, zihnini sisteme bağla..."):
+if prompt := st.chat_input("Astraya sorun"):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Duygu Analizi ve Renk Değişimi
-    if any(kelime in prompt.lower() for kelime in ["hızlı", "savaş", "yap", "hemen"]):
-        st.session_state.dna_color = "#ff0000" # Agresif/Hızlı Mod (Kırmızı)
-    elif any(kelime in prompt.lower() for kelime in ["selam", "merhaba", "nasılsın"]):
-        st.session_state.dna_color = "#00ff00" # Dost Modu (Yeşil)
-    else:
-        st.session_state.dna_color = "#00f2fe" # Standart Mod (Mavi)
-
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # YENİ ÖZELLİK: ZİHİN YANSITMA (THOUGHT REFLECTION)
+        thought_placeholder = st.empty()
+        with thought_placeholder.container():
+            st.markdown("<div class='thought-process'>🧬 <i>Zihin Yansıtma Aktif: Veri paketleri çözümleniyor...</i></div>", unsafe_allow_html=True)
+            time.sleep(0.5)
+            st.markdown("<div class='thought-process'>🧠 <i>Exile protokolü doğrulandı. Mantık çerçevesi kuruluyor...</i></div>", unsafe_allow_html=True)
+            time.sleep(0.8)
+        
         try:
-            # Ana Yanıt
-            main_resp = astra_engine.generate_content(f"Sen Astra'sın. Exile seni yarattı. Soru: {prompt}")
-            st.markdown(main_resp.text)
+            context = f"Sen AstraUltra'sın. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
+            response = astra_engine.generate_content(context)
             
-            # PARALEL EVREN ÖZELLİĞİ
-            if parallel_mode:
-                with st.expander("🌌 Paralel Evren Senaryosu (Farklı Bir Olasılık)"):
-                    alt_resp = astra_engine.generate_content(f"Bu soruya ('{prompt}') bambaşka, daha karanlık veya daha sanatsal bir alternatif cevap ver.")
-                    st.write(alt_resp.text)
-            
-            st.session_state.messages.append({"role": "assistant", "content": main_resp.text})
-            st.rerun() # Renk değişimini anlık yansıtmak için
-            
+            thought_placeholder.empty() # Düşünme yazısını kaldır ve cevabı bas
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"Sinyal Bozulması: {e}")
+            st.error(f"Bağlantı Hatası: {e}")
