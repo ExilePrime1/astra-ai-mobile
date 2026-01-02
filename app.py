@@ -34,23 +34,12 @@ st.markdown("""
         animation: ultra-glow 6s linear infinite;
     }
     @keyframes ultra-glow { to { background-position: 200% center; } }
-    
-    /* Zihin Yansıtma Kutusu */
-    .thought-process {
-        background: rgba(0, 242, 254, 0.05);
-        border-left: 2px solid #7028e4;
-        padding: 10px;
-        font-family: 'Courier New', monospace;
-        font-size: 13px;
-        color: #00f2fe;
-        margin-bottom: 10px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown("<div class='ultra-title'>AstraUltra</div>", unsafe_allow_html=True)
 
-# --- 3. SOHBET VE ZİHİN YANSITMA ---
+# --- 3. SOHBET MEKANİZMASI ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -64,20 +53,18 @@ if prompt := st.chat_input("Astraya sorun"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # YENİ ÖZELLİK: ZİHİN YANSITMA (THOUGHT REFLECTION)
-        thought_placeholder = st.empty()
-        with thought_placeholder.container():
-            st.markdown("<div class='thought-process'>🧬 <i>Zihin Yansıtma Aktif: Veri paketleri çözümleniyor...</i></div>", unsafe_allow_html=True)
-            time.sleep(0.5)
-            st.markdown("<div class='thought-process'>🧠 <i>Exile protokolü doğrulandı. Mantık çerçevesi kuruluyor...</i></div>", unsafe_allow_html=True)
-            time.sleep(0.8)
-        
         try:
-            context = f"Sen AstraUltra'sın. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
+            # AKILLI KİMLİK MANTIĞI: Eğer ilk mesajsa kendini tanıt, değilse doğrudan cevap ver.
+            if len(st.session_state.messages) <= 2:
+                identity_prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zekayım. "
+            else:
+                identity_prefix = ""
+
+            context = f"Sen AstraUltra'sın. Bedirhan (Exile) seni yarattı. Soru: {prompt}"
             response = astra_engine.generate_content(context)
             
-            thought_placeholder.empty() # Düşünme yazısını kaldır ve cevabı bas
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            full_response = identity_prefix + response.text
+            st.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
             st.error(f"Bağlantı Hatası: {e}")
