@@ -2,17 +2,17 @@ import streamlit as st
 import google.generativeai as genai
 import time
 
-# --- 1. CONFIG ---
+# --- 1. SİSTEM BAŞLATMA ---
 st.set_page_config(page_title="AstraUltra", page_icon="💫", layout="wide")
 
 if "NOVAKEY" in st.secrets:
     genai.configure(api_key=st.secrets["NOVAKEY"])
     astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
 else:
-    st.error("API ANAHTARI EKSİK!")
+    st.error("API ANAHTARI BULUNAMADI!")
     st.stop()
 
-# --- 2. CSS & RGB ---
+# --- 2. GÖRSEL DÜZENLEMELER ---
 st.markdown("""
 <style>
     .stApp { background: #000; color: #00f2fe; }
@@ -25,25 +25,25 @@ st.markdown("""
         animation: ultra-glow 5s linear infinite;
     }
     @keyframes ultra-glow { to { background-position: 200% center; } }
-    
-    .recovery-box {
-        border: 2px solid #7028e4; border-radius: 20px;
-        padding: 40px; text-align: center; background: rgba(112, 40, 228, 0.1);
-        margin: 50px auto; max-width: 700px;
+    .recovery-screen {
+        text-align: center; padding: 50px; border: 2px solid #7028e4;
+        border-radius: 20px; background: rgba(112, 40, 228, 0.1);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DÖNGÜ KONTROLÜ ---
+# --- 3. SAYAÇ VE DURUM KONTROLÜ ---
 if "counter" not in st.session_state:
     st.session_state.counter = 0
+if "is_recovering" not in st.session_state:
+    st.session_state.is_recovering = False
 
-# --- 4. ENERJİ YENİLEME EKRANI (Sadece Sayaç 19'a Ulaştığında) ---
-if st.session_state.counter >= 19:
+# --- 4. ENERJİ YENİLEME EKRANI (Tetiklendiğinde Çalışır) ---
+if st.session_state.is_recovering or st.session_state.counter >= 19:
     st.markdown("<div class='astra-title'>AstraUltra</div>", unsafe_allow_html=True)
-    st.markdown("<div class='recovery-box'>", unsafe_allow_html=True)
-    st.markdown("<h2 style='color:#7028e4;'>🔄 KOTA OPTİMİZASYONU</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#888;'>Exile Protokolü: Enerji çekirdekleri 20 saniye içinde soğutuluyor...</p>", unsafe_allow_html=True)
+    st.markdown("<div class='recovery-screen'>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#7028e4;'>🔄 EXİLE ENERJİ SİSTEMİ DEVREDE</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#888;'>Günlük kota veya kullanım sınırı aşıldı. 20 saniye içinde sistem bypass ediliyor...</p>", unsafe_allow_html=True)
     
     t_placeholder = st.empty()
     p_bar = st.progress(0)
@@ -53,12 +53,13 @@ if st.session_state.counter >= 19:
         p_bar.progress((20 - i) * 5)
         time.sleep(1)
     
-    st.session_state.counter = 0 # SIFIRLAMA
-    st.success("⚡ Enerji Yenilendi! Sisteme geri dönülüyor...")
+    st.session_state.counter = 0 
+    st.session_state.is_recovering = False
+    st.success("✅ SİSTEM YENİLENDİ. Devam edebilirsin Exile.")
     time.sleep(1.5)
     st.rerun()
 
-# --- 5. ANA ARAYÜZ ---
+# --- 5. ANA EKRAN ---
 st.markdown("<div class='astra-title'>AstraUltra</div>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
@@ -68,36 +69,30 @@ for m in st.session_state.messages:
     with st.chat_message(m["role"]):
         st.markdown(m["content"])
 
-# Giriş Alanı
 if prompt := st.chat_input("Astraya sorun"):
-    # Mesajı ekle ve sayacı artır
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.session_state.counter += 1
-    
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            # Akıllı Kimlik (Sadece ilk mesajda)
+            # Sadece ilk mesajda kimlik belirt
             prefix = ""
             if len(st.session_state.messages) <= 2:
-                prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zekayım. "
-            
+                prefix = "Sen AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
+
             with st.spinner("İşleniyor..."):
-                context = f"Sen AstraUltra'sın. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
+                context = f"Sen AstraUltra'sın. Bedirhan (Exile) seni yarattı. Soru: {prompt}"
                 response = astra_engine.generate_content(context)
             
-            full_ans = prefix + response.text
-            st.markdown(full_ans)
-            st.session_state.messages.append({"role": "assistant", "content": full_ans})
+            st.session_state.counter += 1
+            st.markdown(prefix + response.text)
+            st.session_state.messages.append({"role": "assistant", "content": prefix + response.text})
             
-            # Sağ alt bilgi ekranı
-            st.sidebar.markdown(f"📊 **Kota Durumu:** {st.session_state.counter} / 19")
-
         except Exception as e:
-            if "429" in str(e):
-                st.session_state.counter = 19 # Hata gelirse zorla yenileme moduna sok
+            # HATA GELDİĞİ AN (429 veya herhangi bir kota hatası)
+            if "429" in str(e) or "quota" in str(e).lower():
+                st.session_state.is_recovering = True # Hemen yenileme modunu tetikle
                 st.rerun()
             else:
-                st.error(f"Sistem Hatası: {e}")
+                st.error(f"Teknik Hata: {e}")
