@@ -1,55 +1,73 @@
 import streamlit as st
 import google.generativeai as genai
 import time
-import random
 
-# --- 1. CORE CONFIG ---
-st.set_page_config(page_title="AstraUltra Genesis", page_icon="🔱", layout="wide")
+# --- 1. SİSTEM AYARLARI ---
+st.set_page_config(page_title="AstraUltra", page_icon="💫", layout="wide")
 
 if "NOVAKEY" in st.secrets:
     genai.configure(api_key=st.secrets["NOVAKEY"])
-    model_flash = genai.GenerativeModel('models/gemini-2.5-flash')
-    model_pro = genai.GenerativeModel('models/gemini-2.5-pro')
+    astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
 else:
-    st.error("KRİTİK HATA: SİSTEM ANAHTARI EKSİK!")
+    st.error("API ANAHTARI EKSİK!")
     st.stop()
 
-# --- 2. CHAMELEON & INFINITE RGB UI ---
-if "ui_theme" not in st.session_state:
-    st.session_state.ui_theme = "linear-gradient(90deg, #00f2fe, #7028e4)"
-
-st.markdown(f"""
+# --- 2. GÖRSEL RÖTUŞLAR VE RECOVERY ANIMASYONU (CSS) ---
+st.markdown("""
 <style>
-    .stApp {{
-        background: radial-gradient(circle at center, #050510 0%, #000000 100%) !important;
-        animation: pulse 10s infinite alternate;
-    }}
-    .astra-header {{
+    .stApp { background: #000; color: #00f2fe; }
+    .astra-title {
         font-family: 'Orbitron', sans-serif;
-        font-size: 65px; font-weight: 900; text-align: center;
-        background: {st.session_state.ui_theme};
+        font-size: 50px; text-align: center;
+        background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 0 20px rgba(0, 242, 254, 0.5));
-        transition: all 2s ease-in-out;
-    }}
-    .genesis-box {{
-        border: 1px solid #7028e4; background: rgba(112, 40, 228, 0.05);
-        padding: 15px; border-radius: 15px; font-family: 'Courier New', monospace;
-        color: #00f2fe; font-size: 13px; margin: 10px 0;
-    }}
+        animation: flow 5s linear infinite;
+    }
+    @keyframes flow { to { background-position: 200% center; } }
+    
+    /* Enerji Barı */
+    .recovery-bar {
+        width: 100%; background-color: #111; border-radius: 20px;
+        border: 1px solid #7028e4; margin: 20px 0;
+    }
+    .recovery-progress {
+        height: 20px; background: linear-gradient(90deg, #7028e4, #00f2fe);
+        border-radius: 20px; width: 0%; transition: width 1s linear;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ANA PANEL ---
-st.markdown("<div class='astra-header'>AstraUltra</div>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#444; letter-spacing:15px;'>GENESIS PROTOCOL | EXILE</p>", unsafe_allow_html=True)
+# --- 3. KOTA VE ENERJİ TAKİBİ ---
+if "usage_count" not in st.session_state:
+    st.session_state.usage_count = 0
 
-# --- 4. MOD SEÇİCİ (Gemini Stili) ---
-selected_mode = st.radio("Zeka Katmanı:", ["Hızlı", "Dengeli", "Pro"], horizontal=True, label_visibility="collapsed")
-descs = {"Hızlı": "🚀 Işık hızında sinirsel iletim.", "Dengeli": "⚖️ Mantık ve yaratıcılık dengesi.", "Pro": "💎 Derin simülasyon ve analiz çekirdeği."}
-st.markdown(f"<div style='text-align:center; color:#888; font-size:12px; margin-bottom:20px;'>{descs[selected_mode]}</div>", unsafe_allow_html=True)
+# --- 4. ANA EKRAN ---
+st.markdown("<div class='astra-title'>AstraUltra</div>", unsafe_allow_html=True)
 
-# --- 5. SOHBET VE GÖRÜLMEMİŞ ÖZELLİKLER ---
+# --- 5. ENERJİ YENİLEME PROTOKOLÜ (DÜNYADA İLK) ---
+if st.session_state.usage_count >= 19:
+    st.warning("⚠️ KRİTİK UYARI: Enerji Çekirdekleri Tükendi. Exile Protokolü başlatılıyor...")
+    
+    # Görsel Sayaç ve Bar
+    progress_placeholder = st.empty()
+    bar_placeholder = st.empty()
+    
+    for i in range(20, -1, -1):
+        percent = (20 - i) * 5
+        progress_placeholder.markdown(f"<h3 style='text-align:center; color:#00f2fe;'>ENERCİ YENİLENİYOR: {i}s</h3>", unsafe_allow_html=True)
+        bar_placeholder.markdown(f"""
+            <div class='recovery-bar'>
+                <div class='recovery-progress' style='width: {percent}%;'></div>
+            </div>
+        """, unsafe_allow_html=True)
+        time.sleep(1)
+    
+    st.session_state.usage_count = 0 # Kotayı (sahte olarak) sıfırla
+    st.success("✅ KOTA SIFIRLANDI: AstraUltra tam kapasiteye döndü.")
+    time.sleep(2)
+    st.rerun()
+
+# --- 6. SOHBET MEKANİZMASI ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -58,35 +76,30 @@ for m in st.session_state.messages:
         st.markdown(m["content"])
 
 if prompt := st.chat_input("Astraya sorun"):
-    # BUKALEMUN UI TETİKLEYİCİ
-    if "kod" in prompt.lower() or "python" in prompt.lower():
-        st.session_state.ui_theme = "linear-gradient(90deg, #00ff00, #004400)"
-    elif "aşk" in prompt.lower() or "sanat" in prompt.lower():
-        st.session_state.ui_theme = "linear-gradient(90deg, #ff00c8, #7028e4)"
-    
+    st.session_state.usage_count += 1 # Her soruda sayacı artır
     st.session_state.messages.append({"role": "user", "content": prompt})
+    
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
         try:
-            active_model = model_pro if selected_mode == "Pro" else model_flash
+            # Akıllı Kimlik (Sadece ilk mesajda)
+            prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zekayım. " if len(st.session_state.messages) <= 2 else ""
             
-            # KİMLİK TANIMI (Sadece ilk mesajda)
-            prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. " if len(st.session_state.messages) <= 2 else ""
+            with st.spinner("İşleniyor..."):
+                context = f"Sen AstraUltra'sın. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
+                response = astra_engine.generate_content(context)
             
-            with st.spinner("Sinapslar bağlanıyor..."):
-                response = active_model.generate_content(f"Sen AstraUltra'sın. Exile seni yarattı. Soru: {prompt}")
-                
-                # PARALEL GERÇEKLİK SİMÜLASYONU (Görülmemiş Özellik 4)
-                with st.expander("🌌 Paralel Gerçeklik Projeksiyonu"):
-                    parallel = active_model.generate_content(f"'{prompt}' konusunu 100 yıl sonraki bir gelecekte geçiyormuş gibi tek cümleyle yorumla.")
-                    st.write(parallel.text)
+            st.markdown(prefix + response.text)
+            st.session_state.messages.append({"role": "assistant", "content": prefix + response.text})
             
-            full_text = prefix + response.text
-            st.markdown(full_text)
-            st.session_state.messages.append({"role": "assistant", "content": full_text})
-            st.rerun() # Tema değişikliği için
+            # Sağ alt köşede küçük bir enerji bilgisi
+            st.sidebar.write(f"⚡ Enerji Seviyesi: %{int((19 - st.session_state.usage_count)/19 * 100)}")
             
         except Exception as e:
-            st.error(f"Sistem Hatası: {e}")
+            if "429" in str(e):
+                st.session_state.usage_count = 19 # Zorla yenileme moduna sok
+                st.rerun()
+            else:
+                st.error(f"Hata: {e}")
