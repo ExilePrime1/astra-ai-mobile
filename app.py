@@ -57,7 +57,7 @@ with st.sidebar:
     # Özellik 4: Sistem İstatistikleri
     st.markdown("---")
     st.write("🛰️ **Bağlantı:** Güçlü")
-    st.write("🧬 **Çekirdek:** v2.5-Flash")
+    st.write("🧬 **Çekirdek:** Astra 3.0 Nova")
 
 # --- 4. ERİŞİM PANELİ ---
 if "auth" not in st.session_state:
