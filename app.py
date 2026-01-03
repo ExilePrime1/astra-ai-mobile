@@ -10,15 +10,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# API Anahtarlarını Güvenli Şekilde Çekme
+# API Anahtarlarını Secrets'tan Çekme (Hata korumalı)
 if "NOVAKEY" in st.secrets:
-    # Anahtarları listeye al ve boşlukları temizle
-    keys = [k.strip() for k in st.secrets["NOVAKEY"].split(",")]
+    # Anahtarları listeye al, temizle ve boş olanları ele
+    keys = [k.strip() for k in st.secrets["NOVAKEY"].split(",") if k.strip()]
 else:
-    st.error("⚠️ KRİTİK HATA: NOVAKEY Secrets kısmında bulunamadı Bedirhan. Lütfen anahtarları ekle.")
+    st.error("⚠️ KRİTİK HATA: Streamlit Secrets kısmında 'NOVAKEY' bulunamadı Bedirhan.")
     st.stop()
 
-# --- 2. GÖRSEL TASARIM (RGB FLOW & MODERN UI) ---
+# --- 2. GÖRSEL TASARIM (EXILE STYLE) ---
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: #e0e0e0; }
@@ -29,25 +29,25 @@ st.markdown("""
         background-size: 200% auto;
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         animation: flow 5s linear infinite;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
     }
     @keyframes flow { to { background-position: 200% center; } }
-    .stChatMessage { border-radius: 20px; border: 1px solid #333; }
+    .stChatMessage { border-radius: 15px; border: 1px solid #222; background-color: #0a0a0a; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. AKILLI MOTOR (LOAD BALANCER & AUTO-RECOVERY) ---
+# --- 3. AKILLI CEVAP MOTORU (DİNAMİK ÇEKİRDEK YÖNETİMİ) ---
 def get_astra_response(user_input):
-    """Bozuk veya kotası dolmuş anahtarları otomatik atlar."""
-    # Her seferinde anahtarları karıştır ki yük dağılsın
+    # Anahtarları her seferinde karıştır (Yük dengeleme)
     shuffled_keys = random.sample(keys, len(keys))
     
     for i, key in enumerate(shuffled_keys):
         try:
             genai.configure(api_key=key)
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            # En stabil model: gemini-1.5-flash
+            model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # Kimlik tanımı (Sadece ilk mesajda)
+            # İlk mesajda kimlik tanımı
             prefix = ""
             if len(st.session_state.messages) <= 1:
                 prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
@@ -56,20 +56,17 @@ def get_astra_response(user_input):
             return prefix + response.text
             
         except Exception as e:
-            error_msg = str(e).lower()
-            # Eğer anahtarın süresi dolmuşsa veya kota bittiyse bir sonrakini dene
-            if "api_key_invalid" in error_msg or "expired" in error_msg or "429" in error_msg:
-                continue 
-            else:
-                return f"Beklenmedik teknik bir arıza: {str(e)}"
-    
-    return "🚫 Sistem uyarısı: Tüm enerji çekirdekleri (API Anahtarları) geçersiz veya kotaları dolmuş Bedirhan. Lütfen anahtarları yenile."
+            # Hataları gizlice sidebar'a yaz (Hata ayıklama için)
+            st.sidebar.warning(f"⚠️ Çekirdek {i+1} atlandı: {str(e)[:40]}...")
+            continue # Bir sonraki anahtarı dene
+            
+    return "🚫 Tüm enerji çekirdekleri reddedildi Bedirhan. Lütfen Secrets panelindeki anahtarlarını kontrol et."
 
-# --- 4. ANA ARAYÜZ ---
+# --- 4. ARAYÜZ ---
 st.markdown("<div class='astra-header'>AstraUltra</div>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#7028e4;'>Exile Savunma Sistemleri Aktif</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center; color:#555;'>Exile Yapay Zeka Sistemleri</p>", unsafe_allow_html=True)
 
-# Sohbet Geçmişi Yönetimi
+# Sohbet Geçmişi
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -77,25 +74,24 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Kullanıcı Girişi
-if prompt := st.chat_input("Mesajınızı yazın..."):
+# Giriş ve İşleme
+if prompt := st.chat_input("Bir mesaj gönder..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Enerji çekirdekleri taranıyor..."):
+        with st.spinner("İşleniyor..."):
             full_response = get_astra_response(prompt)
             st.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-# --- 5. YAN PANEL (DURUM MONİTÖRÜ) ---
+# --- 5. YAN PANEL (DURUM) ---
 with st.sidebar:
-    st.title("🔱 Kontrol Paneli")
+    st.title("🔱 Kontrol Ünitesi")
     st.write(f"**Yapımcı:** Bedirhan (Exile)")
     st.divider()
-    st.write(f"🛰️ **Toplam Çekirdek:** {len(keys)}")
-    st.success("Sistem Çevrimiçi")
-    if st.button("Sohbeti Temizle"):
+    st.info(f"🛰️ Aktif Çekirdek Sayısı: {len(keys)}")
+    if st.button("Hafızayı Temizle"):
         st.session_state.messages = []
         st.rerun()
