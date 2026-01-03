@@ -7,38 +7,57 @@ import random
 st.set_page_config(page_title="AstraUltra", page_icon="🔱", layout="wide")
 
 if "NOVAKEY" in st.secrets:
+    # Birden fazla anahtarın varsa hepsini kullanır
     keys = [k.strip() for k in st.secrets["NOVAKEY"].split(",") if k.strip()]
 else:
-    st.error("⚠️ NOVAKEY bulunamadı Bedirhan.")
+    st.error("⚠️ Bedirhan, NOVAKEY bulunamadı.")
     st.stop()
 
-# --- 2. MOTOR (KOTA SAVAR) ---
+# --- 2. GÖRSEL TASARIM ---
+st.markdown("""
+<style>
+    .stApp { background-color: #000000; color: #e0e0e0; }
+    .astra-header {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 50px; text-align: center;
+        background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 3. AKILLI RETRY MOTORU ---
 def get_astra_response(user_input):
     shuffled_keys = random.sample(keys, len(keys))
     
     for key in shuffled_keys:
-        try:
-            genai.configure(api_key=key)
-            # En az kota harcayan ve en hızlı model
-            model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
-            
-            response = model.generate_content(user_input)
-            
-            if response and response.text:
-                return response.text
+        genai.configure(api_key=key)
+        # Kota dostu model
+        model = genai.GenerativeModel("models/gemini-1.5-flash")
+        
+        # 3 kez deneme hakkı
+        for attempt in range(3):
+            try:
+                # Kimlik Tanımı
+                prefix = ""
+                if len(st.session_state.messages) <= 1:
+                    prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
                 
-        except Exception as e:
-            if "429" in str(e):
-                # Kota dolmuşsa diğer anahtara geçmeden önce kısa bir mola
-                time.sleep(1)
-                continue
-            else:
-                return f"🚨 Teknik Hata: {str(e)[:50]}"
+                response = model.generate_content(user_input)
+                return prefix + response.text
                 
-    return "🚫 Bedirhan, eklediğin TÜM anahtarların kotası dolmuş. Yeni anahtarlar eklemelisin."
+            except Exception as e:
+                if "429" in str(e):
+                    # Kota hatasıysa 2 saniye uyu ve tekrar dene
+                    time.sleep(2)
+                    continue
+                else:
+                    break # Başka bir hataysa bu anahtarı terk et
+                    
+    return "🚫 Bedirhan, Google'ın ücretsiz kotası şu an çok daraldı. 30 saniye sonra tekrar dene."
 
-# --- 3. ARAYÜZ ---
-st.markdown("<h1 style='text-align: center; color: #7028e4;'>🔱 AstraUltra</h1>", unsafe_allow_html=True)
+# --- 4. ARAYÜZ ---
+st.markdown("<div class='astra-header'>AstraUltra</div>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -47,11 +66,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("Bir komut ver..."):
+if prompt := st.chat_input("Mesajını bırak..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"): st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        res = get_astra_response(prompt)
-        st.markdown(res)
-        st.session_state.messages.append({"role": "assistant", "content": res})
+        with st.spinner("Kota limiti kontrol ediliyor..."):
+            res = get_astra_response(prompt)
+            st.markdown(res)
+            st.session_state.messages.append({"role": "assistant", "content": res})
