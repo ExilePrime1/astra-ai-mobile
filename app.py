@@ -1,68 +1,85 @@
 import streamlit as st
 import google.generativeai as genai
+import random
 
 # --- 1. SİSTEM YAPILANDIRMASI ---
-st.set_page_config(page_title="AstraUltra", page_icon="💫", layout="wide")
+st.set_page_config(
+    page_title="AstraUltra", 
+    page_icon="🔱", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# API Anahtarı ve Model Tanımlama
+# API Anahtarlarını Secrets'tan Çekme
 if "NOVAKEY" in st.secrets:
-    genai.configure(api_key=st.secrets["NOVAKEY"])
-    astra_engine = genai.GenerativeModel('models/gemini-2.5-flash')
+    keys = [k.strip() for k in st.secrets["NOVAKEY"].split(",")]
 else:
-    st.error("API ANAHTARI EKSİK!")
+    st.error("⚠️ HATA: NOVAKEY Secrets kısmında bulunamadı Bedirhan.")
     st.stop()
 
-# --- 2. GÖRSEL TASARIM (RGB FLOW CSS) ---
+# --- 2. GÖRSEL TASARIM (RGB FLOW) ---
 st.markdown("""
 <style>
-    .stApp { background: #000; color: #e0e0e0; }
-    .astra-title {
+    .stApp { background-color: #000000; color: #e0e0e0; }
+    .astra-header {
         font-family: 'Orbitron', sans-serif;
         font-size: 60px; font-weight: 900; text-align: center;
         background: linear-gradient(90deg, #00f2fe, #7028e4, #ff00c8, #00f2fe);
         background-size: 200% auto;
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         animation: flow 5s linear infinite;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
     }
     @keyframes flow { to { background-position: 200% center; } }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. ANA ARAYÜZ ---
-st.markdown("<div class='astra-title'>AstraUltra</div>", unsafe_allow_html=True)
+# --- 3. AKILLI MOTOR ---
+def get_astra_response(user_input):
+    shuffled_keys = random.sample(keys, len(keys))
+    
+    for key in shuffled_keys:
+        try:
+            genai.configure(api_key=key)
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            
+            # Sadece ilk mesajda kimlik tanımı
+            prefix = ""
+            if len(st.session_state.messages) <= 1:
+                prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
+            
+            response = model.generate_content(user_input)
+            return prefix + response.text
+        except Exception as e:
+            if "429" in str(e):
+                continue
+            else:
+                return f"Teknik bir hata: {str(e)}"
+    
+    return "🚫 Enerji çekirdekleri şu an meşgul Bedirhan."
+
+# --- 4. ANA ARAYÜZ ---
+st.markdown("<div class='astra-header'>AstraUltra</div>", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Mesajları Görüntüle
-for m in st.session_state.messages:
-    with st.chat_message(m["role"]):
-        st.markdown(m["content"])
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# Giriş Alanı: "Astraya sorun"
-if prompt := st.chat_input("Astraya sorun"):
+if prompt := st.chat_input("Astraya bir mesaj gönder..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        try:
-            # Akıllı Kimlik: Sadece ilk soruda görünür
-            prefix = ""
-            if len(st.session_state.messages) <= 2:
-                prefix = "Ben AstraUltra, Bedirhan'ın (Exile) yarattığı bir yapay zeka. "
-            
-            with st.spinner("Düşünüyor..."):
-                context = f"Sen AstraUltra'sın. Seni Bedirhan (Exile) yarattı. Soru: {prompt}"
-                response = astra_engine.generate_content(context)
-                
-                final_response = prefix + response.text
-                st.markdown(final_response)
-                st.session_state.messages.append({"role": "assistant", "content": final_response})
+        with st.spinner("İşleniyor..."):
+            full_response = get_astra_response(prompt)
+            st.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-        except Exception as e:
-            if "429" in str(e):
-                st.warning("⚠️ Google kotası doldu. Lütfen bir süre sonra tekrar dene Bedirhan.")
-            else:
-                st.error(f"Teknik bir sorun oluştu: {e}")
+# Yan Panel
+st.sidebar.title("🔱 AstraUltra")
+st.sidebar.write("Yapımcı: **Bedirhan (Exile)**")
+st.sidebar.write(f"Sistem Durumu: {len(keys)} Çekirdek Aktif")
